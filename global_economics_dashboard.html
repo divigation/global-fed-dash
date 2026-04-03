@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Global Economics Dashboard — US · Argentina · China</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/prop-types@15/prop-types.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #0b0f14;
+    --bg-card: #141b24;
+    --bg-card-hover: #1a2332;
+    --border: #1e2a3a;
+    --text-primary: #e8ecf1;
+    --text-secondary: #8899aa;
+    --text-muted: #556677;
+    --accent-us: #4a9eff;
+    --accent-arg: #75b8f4;
+    --accent-chn: #ef6b4a;
+    --accent-green: #34d399;
+    --accent-red: #f87171;
+    --accent-yellow: #fbbf24;
+    --radius: 10px;
+    --font-sans: 'DM Sans', -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  #root { min-height: 100vh; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-primary); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Animations */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+  .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+  .stagger-1 { animation-delay: 0.05s; }
+  .stagger-2 { animation-delay: 0.1s; }
+  .stagger-3 { animation-delay: 0.15s; }
+  .stagger-4 { animation-delay: 0.2s; }
+  .stagger-5 { animation-delay: 0.25s; }
+  .loading-pulse { animation: pulse 1.5s ease-in-out infinite; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {
+  LineChart, Line, AreaChart, Area, BarChart, Bar,
+  XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, ReferenceLine
+} = Recharts;
+
+// ═══════════════════════════════════════════════════════════════
+// STATIC DATA — Curated from BEA, BLS, FRED, INDEC, NBS, IMF, World Bank
+// Last updated: March 2026
+// ═══════════════════════════════════════════════════════════════
+
+const COUNTRY_META = {
+  US:  { code: "USA", name: "United States", flag: "🇺🇸", accent: "var(--accent-us)", short: "US" },
+  ARG: { code: "ARG", name: "Argentina",    flag: "🇦🇷", accent: "var(--accent-arg)", short: "ARG" },
+  CHN: { code: "CHN", name: "China",        flag: "🇨🇳", accent: "var(--accent-chn)", short: "CHN" },
+};
+
+// Helper to build {date, value} arrays
+const D = (date, value) => ({ date, value });
+
+const STATIC_DATA = {
+  US: {
+    gdp_growth: [
+      D("2023-01",2.0), D("2023-04",2.1), D("2023-07",4.9), D("2023-10",3.2),
+      D("2024-01",1.3), D("2024-04",3.0), D("2024-07",3.1), D("2024-10",2.4),
+      D("2025-01",-0.5), D("2025-04",3.8), D("2025-07",4.4), D("2025-10",0.7),
+    ],
+    inflation: [
+      D("2023-01",6.4), D("2023-02",6.0), D("2023-03",5.0), D("2023-04",4.9), D("2023-05",4.0), D("2023-06",3.0),
+      D("2023-07",3.2), D("2023-08",3.7), D("2023-09",3.7), D("2023-10",3.2), D("2023-11",3.1), D("2023-12",3.4),
+      D("2024-01",3.1), D("2024-02",3.2), D("2024-03",3.5), D("2024-04",3.4), D("2024-05",3.3), D("2024-06",3.0),
+      D("2024-07",2.9), D("2024-08",2.5), D("2024-09",2.4), D("2024-10",2.6), D("2024-11",2.7), D("2024-12",2.9),
+      D("2025-01",3.0), D("2025-02",2.8), D("2025-03",2.4), D("2025-04",2.3), D("2025-05",2.4), D("2025-06",2.7),
+      D("2025-07",2.7), D("2025-08",2.9), D("2025-09",3.0), D("2025-11",2.7), D("2025-12",2.7),
+      D("2026-01",2.4), D("2026-02",2.4),
+    ],
+    unemployment: [
+      D("2023-01",3.5), D("2023-02",3.6), D("2023-03",3.5), D("2023-04",3.4), D("2023-05",3.6), D("2023-06",3.6),
+      D("2023-07",3.5), D("2023-08",3.7), D("2023-09",3.7), D("2023-10",3.9), D("2023-11",3.7), D("2023-12",3.8),
+      D("2024-01",3.7), D("2024-02",3.9), D("2024-03",3.9), D("2024-04",3.9), D("2024-05",3.9), D("2024-06",4.1),
+      D("2024-07",4.2), D("2024-08",4.2), D("2024-09",4.1), D("2024-10",4.1), D("2024-11",4.2), D("2024-12",4.1),
+      D("2025-01",4.0), D("2025-02",4.2), D("2025-03",4.2), D("2025-04",4.2), D("2025-05",4.3), D("2025-06",4.1),
+      D("2025-07",4.3), D("2025-08",4.3), D("2025-09",4.4), D("2025-11",4.5), D("2025-12",4.4),
+      D("2026-01",4.3), D("2026-02",4.4),
+    ],
+    exchange_rate: [
+      D("2023-01",118.5), D("2023-04",117.8), D("2023-07",117.2), D("2023-10",120.5),
+      D("2024-01",119.8), D("2024-04",121.3), D("2024-07",120.6), D("2024-10",124.8),
+      D("2025-01",130.2), D("2025-04",126.5), D("2025-07",123.8), D("2025-10",122.1),
+      D("2026-01",121.5), D("2026-03",120.9),
+    ],
+    policy_rate: [
+      D("2023-01",4.33), D("2023-02",4.57), D("2023-03",4.65), D("2023-05",5.06), D("2023-06",5.08),
+      D("2023-07",5.33), D("2023-08",5.33), D("2023-12",5.33),
+      D("2024-01",5.33), D("2024-06",5.33), D("2024-09",4.83), D("2024-11",4.58), D("2024-12",4.33),
+      D("2025-01",4.33), D("2025-03",4.08), D("2025-06",4.08), D("2025-09",3.83), D("2025-12",3.58),
+      D("2026-01",3.58), D("2026-02",3.58),
+    ],
+    debt_gdp: [
+      D("2023-01",118.0), D("2023-04",118.3), D("2023-07",118.9), D("2023-10",119.2),
+      D("2024-01",120.1), D("2024-04",120.8), D("2024-07",121.5), D("2024-10",121.9),
+      D("2025-01",122.0), D("2025-04",122.2), D("2025-07",122.4), D("2025-10",122.5),
+    ],
+    current_account: [
+      D("2023-07",-2.9), D("2023-10",-2.8),
+      D("2024-07",-4.2), D("2024-10",-4.1),
+      D("2025-01",-6.0), D("2025-04",-3.3), D("2025-07",-2.9), D("2025-10",-2.4),
+    ],
+  },
+
+  ARG: {
+    gdp_growth: [
+      D("2023-01",-4.4), D("2023-04",-2.8), D("2023-07",-1.3), D("2023-10",-0.7),
+      D("2024-01",-5.2), D("2024-04",-1.7), D("2024-07",-2.1), D("2024-10",2.5),
+      D("2025-01",5.7), D("2025-04",6.4), D("2025-07",3.3), D("2025-10",2.1),
+    ],
+    inflation: [
+      D("2023-01",99.0), D("2023-03",105.0), D("2023-06",116.0), D("2023-09",138.0), D("2023-12",211.0),
+      D("2024-01",254.0), D("2024-03",287.0), D("2024-04",289.0), D("2024-06",272.0),
+      D("2024-09",209.0), D("2024-11",166.0), D("2024-12",118.0),
+      D("2025-03",56.0), D("2025-06",45.0), D("2025-09",37.0), D("2025-12",31.5),
+      D("2026-01",32.4), D("2026-02",33.1),
+    ],
+    unemployment: [
+      D("2023-01",6.3), D("2023-04",6.2), D("2023-07",5.7), D("2023-10",5.7),
+      D("2024-01",7.7), D("2024-04",7.6), D("2024-07",6.9), D("2024-10",6.4),
+      D("2025-01",7.9), D("2025-04",7.6), D("2025-07",6.6), D("2025-10",7.5),
+    ],
+    exchange_rate: [
+      D("2023-01",185), D("2023-06",256), D("2023-11",367),
+      D("2023-12",800), // Milei devaluation
+      D("2024-03",855), D("2024-06",912), D("2024-09",969), D("2024-12",1031),
+      D("2025-02",1070), D("2025-04",1100), D("2025-06",1180), D("2025-09",1350), D("2025-12",1447),
+      D("2026-01",1449), D("2026-02",1408), D("2026-03",1398),
+    ],
+    policy_rate: [
+      D("2023-01",75.0), D("2023-06",97.0), D("2023-10",133.0),
+      D("2023-12",110.0), // Milei takes office
+      D("2024-03",80.0), D("2024-04",60.0), D("2024-06",40.0), D("2024-09",35.0), D("2024-12",32.0),
+      D("2025-01",29.0), D("2025-06",29.0), D("2025-12",29.0),
+      D("2026-01",29.0), D("2026-03",29.0),
+    ],
+    debt_gdp: [
+      D("2023-01",88.4), D("2024-01",84.7), D("2025-01",75.0),
+    ],
+    current_account: [
+      D("2022-01",-0.7), D("2023-01",-3.2), D("2024-01",0.9), D("2025-01",-1.7),
+    ],
+  },
+
+  CHN: {
+    gdp_growth: [
+      D("2023-01",4.5), D("2023-04",6.3), D("2023-07",4.9), D("2023-10",5.2),
+      D("2024-01",5.3), D("2024-04",4.7), D("2024-07",4.6), D("2024-10",5.4),
+      D("2025-01",5.4), D("2025-04",5.2), D("2025-07",4.8), D("2025-10",4.5),
+    ],
+    inflation: [
+      D("2023-01",2.1), D("2023-03",0.7), D("2023-06",0.0), D("2023-09",0.0), D("2023-12",-0.3),
+      D("2024-01",0.8), D("2024-03",0.1), D("2024-06",0.2), D("2024-09",0.4), D("2024-12",0.1),
+      D("2025-01",0.2), D("2025-03",-0.1), D("2025-05",-0.1), D("2025-08",-0.4), D("2025-10",0.2), D("2025-12",0.8),
+      D("2026-01",0.2), D("2026-02",1.3),
+    ],
+    unemployment: [
+      D("2023-01",5.5), D("2023-04",5.2), D("2023-07",5.2), D("2023-10",5.0), D("2023-12",5.1),
+      D("2024-01",5.2), D("2024-04",5.0), D("2024-07",5.2), D("2024-10",5.0), D("2024-12",5.1),
+      D("2025-01",5.2), D("2025-04",5.1), D("2025-07",5.2), D("2025-10",5.0), D("2025-12",5.1),
+      D("2026-02",5.3),
+    ],
+    exchange_rate: [
+      D("2023-01",6.79), D("2023-04",6.92), D("2023-07",7.15), D("2023-10",7.30), D("2023-12",7.10),
+      D("2024-01",7.18), D("2024-04",7.24), D("2024-07",7.27), D("2024-10",7.12), D("2024-12",7.30),
+      D("2025-01",7.28), D("2025-04",7.25), D("2025-07",7.21), D("2025-10",7.08), D("2025-12",7.00),
+      D("2026-01",6.93), D("2026-03",6.91),
+    ],
+    policy_rate: [
+      D("2023-01",3.65), D("2023-06",3.55), D("2023-08",3.45),
+      D("2024-01",3.45), D("2024-07",3.35), D("2024-10",3.10),
+      D("2025-01",3.10), D("2025-05",3.00), D("2025-12",3.00),
+      D("2026-01",3.00), D("2026-03",3.00),
+    ],
+    debt_gdp: [
+      D("2023-01",84.0), D("2024-01",88.0), D("2025-01",96.0),
+    ],
+    current_account: [
+      D("2022-01",2.3), D("2023-01",1.4), D("2024-01",2.2), D("2025-01",5.2),
+    ],
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// DASHBOARD METRICS — What we display per country
+// ═══════════════════════════════════════════════════════════════
+
+// Metrics config for the unified comparison view
+const DASHBOARD_METRICS = [
+  { key: "gdp_growth",      label: "Real GDP Growth",       unit: "%",     description: "Real GDP growth rate (YoY)" },
+  { key: "inflation",       label: "CPI Inflation",         unit: "%",     description: "Consumer price inflation (YoY)" },
+  { key: "unemployment",    label: "Unemployment Rate",      unit: "%",     description: "Total unemployment rate" },
+  { key: "exchange_rate",   label: "Exchange Rate vs USD",   unit: "LC/$",  description: "Local currency per US dollar (USD index for US)" },
+  { key: "policy_rate",     label: "Interest Rate",          unit: "%",     description: "Policy / interbank rate" },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// REACT COMPONENTS
+// ═══════════════════════════════════════════════════════════════
+
+// --- Sparkline mini chart ---
+function Sparkline({ data, color, width = 120, height = 40 }) {
+  if (!data || data.length < 2) return <span style={{color:'var(--text-muted)', fontFamily:'var(--font-mono)', fontSize:11}}>No data</span>;
+  return (
+    <ResponsiveContainer width={width} height={height}>
+      <AreaChart data={data} margin={{top:2,right:2,bottom:2,left:2}}>
+        <defs>
+          <linearGradient id={`grad-${color.replace(/[^a-z0-9]/gi,'')}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity={0.3}/>
+            <stop offset="100%" stopColor={color} stopOpacity={0.02}/>
+          </linearGradient>
+        </defs>
+        <Area type="monotone" dataKey="value" stroke={color} strokeWidth={1.5}
+              fill={`url(#grad-${color.replace(/[^a-z0-9]/gi,'')})`} dot={false} />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+}
+
+// --- Full chart for comparison view ---
+function ComparisonChart({ metric, dataByCountry }) {
+  // Merge all country data onto shared date axis
+  const allDates = new Set();
+  Object.values(dataByCountry).forEach(arr =>
+    (arr || []).forEach(d => allDates.add(d.date))
+  );
+  const sortedDates = [...allDates].sort();
+
+  const merged = sortedDates.map(date => {
+    const row = { date };
+    Object.entries(dataByCountry).forEach(([country, arr]) => {
+      const match = (arr || []).find(d => d.date === date);
+      if (match) row[country] = Math.round(match.value * 100) / 100;
+    });
+    return row;
+  });
+
+  // Thin out data for readability
+  const step = Math.max(1, Math.floor(merged.length / 60));
+  const thinned = merged.filter((_, i) => i % step === 0 || i === merged.length - 1);
+
+  const formatDate = (d) => {
+    if (!d) return '';
+    const parts = d.split('-');
+    return `${parts[0].slice(2)}/${parts[1]}`;
+  };
+
+  return (
+    <div style={{width:'100%', height:300}}>
+      <ResponsiveContainer>
+        <LineChart data={thinned} margin={{top:10,right:20,bottom:5,left:10}}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+          <XAxis dataKey="date" tickFormatter={formatDate} tick={{fill:'var(--text-muted)', fontSize:11, fontFamily:'var(--font-mono)'}} interval="preserveStartEnd" />
+          <YAxis tick={{fill:'var(--text-muted)', fontSize:11, fontFamily:'var(--font-mono)'}} width={50} />
+          <Tooltip
+            contentStyle={{background:'var(--bg-card)',border:'1px solid var(--border)',borderRadius:8,fontFamily:'var(--font-mono)',fontSize:12}}
+            labelStyle={{color:'var(--text-secondary)'}}
+          />
+          {Object.keys(COUNTRY_META).map(c => (
+            <Line key={c} type="monotone" dataKey={c}
+                  stroke={COUNTRY_META[c].accent} strokeWidth={2} dot={false}
+                  name={COUNTRY_META[c].name} connectNulls />
+          ))}
+          <Legend wrapperStyle={{fontFamily:'var(--font-sans)', fontSize:13}} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+// --- Metric Card ---
+function MetricCard({ label, value, unit, data, color, description, trend }) {
+  const trendColor = trend > 0 ? 'var(--accent-green)' : trend < 0 ? 'var(--accent-red)' : 'var(--text-muted)';
+  const trendArrow = trend > 0 ? '↑' : trend < 0 ? '↓' : '→';
+
+  return (
+    <div style={{
+      background: 'var(--bg-card)',
+      border: '1px solid var(--border)',
+      borderRadius: 'var(--radius)',
+      padding: '16px 18px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 8,
+      transition: 'border-color 0.2s, background 0.2s',
+      cursor: 'default',
+    }}
+    onMouseEnter={e => { e.currentTarget.style.borderColor = color; e.currentTarget.style.background = 'var(--bg-card-hover)'; }}
+    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg-card)'; }}
+    >
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+        <div>
+          <div style={{fontSize:12, color:'var(--text-secondary)', fontWeight:500, textTransform:'uppercase', letterSpacing:'0.5px'}}>{label}</div>
+          <div style={{fontSize:26, fontFamily:'var(--font-mono)', fontWeight:600, marginTop:4, color: value !== null ? 'var(--text-primary)' : 'var(--text-muted)'}}>
+            {value !== null ? `${value.toLocaleString(undefined, {maximumFractionDigits:1})}` : '—'}
+            <span style={{fontSize:13, fontWeight:400, color:'var(--text-muted)', marginLeft:4}}>{unit}</span>
+          </div>
+        </div>
+        <Sparkline data={data} color={color} />
+      </div>
+      {trend !== null && (
+        <div style={{fontSize:12, fontFamily:'var(--font-mono)', color: trendColor}}>
+          {trendArrow} {Math.abs(trend).toFixed(1)} vs prior
+        </div>
+      )}
+      <div style={{fontSize:11, color:'var(--text-muted)', marginTop:2}}>{description}</div>
+    </div>
+  );
+}
+
+// --- Country Dashboard Panel ---
+function CountryPanel({ country, fredData, wbData, loading }) {
+  const meta = COUNTRY_META[country];
+  if (loading) {
+    return (
+      <div style={{textAlign:'center', padding:'60px 0'}}>
+        <div className="loading-pulse" style={{fontSize:18, color:'var(--text-secondary)'}}>Loading {meta.name} data...</div>
+      </div>
+    );
+  }
+
+  // Build metric cards from whatever data we have
+  const cards = DASHBOARD_METRICS.map(m => {
+    const fd = fredData[m.key] || [];
+    const wb = wbData[m.key] || [];
+    const data = fd.length > 0 ? fd : wb;
+    const latest = data.length > 0 ? data[data.length - 1].value : null;
+    const prev = data.length > 1 ? data[data.length - 2].value : null;
+    const trend = (latest !== null && prev !== null) ? latest - prev : null;
+    return (
+      <MetricCard
+        key={m.key}
+        label={m.label}
+        value={latest}
+        unit={m.unit}
+        data={data.slice(-36)}
+        color={meta.accent}
+        description={m.description}
+        trend={trend}
+      />
+    );
+  });
+
+  return (
+    <div>
+      <div style={{display:'flex', alignItems:'center', gap:12, marginBottom:20}}>
+        <span style={{fontSize:32}}>{meta.flag}</span>
+        <div>
+          <h2 style={{fontSize:22, fontWeight:600, margin:0}}>{meta.name}</h2>
+          <span style={{fontSize:13, color:'var(--text-secondary)'}}>Economic Dashboard</span>
+        </div>
+      </div>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+        gap: 14,
+      }}>
+        {cards}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MAIN APP
+// ═══════════════════════════════════════════════════════════════
+
+function App() {
+  const [view, setView] = React.useState('overview'); // overview | US | ARG | CHN | compare
+  const [compareMetric, setCompareMetric] = React.useState('gdp_growth');
+
+  const countryData = STATIC_DATA;
+
+  // Navigation
+  const tabs = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'US', label: '🇺🇸 United States' },
+    { id: 'ARG', label: '🇦🇷 Argentina' },
+    { id: 'CHN', label: '🇨🇳 China' },
+    { id: 'compare', label: 'Compare' },
+    { id: 'sources', label: 'Sources' },
+  ];
+
+  return (
+    <div style={{maxWidth:1280, margin:'0 auto', padding:'20px 24px 60px'}}>
+      {/* Header */}
+      <header style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24, paddingBottom:16, borderBottom:'1px solid var(--border)'}}>
+        <div>
+          <h1 style={{fontSize:22, fontWeight:700, letterSpacing:'-0.3px', margin:0}}>Global Economics Dashboard</h1>
+          <span style={{fontSize:12, color:'var(--text-muted)'}}>EMBA BA 6239 · Spring 2026 · Data as of March 2026</span>
+        </div>
+        <div style={{fontSize:11, color:'var(--text-muted)', fontFamily:'var(--font-mono)'}}>
+          Sources: BEA, BLS, FRED, INDEC, NBS, IMF, World Bank
+        </div>
+      </header>
+
+      {/* Navigation */}
+      <nav style={{display:'flex', gap:4, marginBottom:28, flexWrap:'wrap'}}>
+        {tabs.map(t => (
+          <button key={t.id} onClick={() => setView(t.id)}
+            style={{
+              padding:'8px 16px', fontSize:13, fontWeight: view === t.id ? 600 : 400,
+              background: view === t.id ? 'var(--bg-card-hover)' : 'transparent',
+              color: view === t.id ? 'var(--text-primary)' : 'var(--text-secondary)',
+              border: view === t.id ? '1px solid var(--border)' : '1px solid transparent',
+              borderRadius: 6, cursor:'pointer', transition:'all 0.2s',
+              fontFamily:'var(--font-sans)',
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </nav>
+
+      {/* Overview */}
+      {view === 'overview' && (
+        <div>
+          <h2 style={{fontSize:18, fontWeight:600, marginBottom:16}}>Three-Economy Snapshot</h2>
+          <p style={{fontSize:14, color:'var(--text-secondary)', marginBottom:24, maxWidth:700}}>
+            Key metrics at a glance. Click a country tab for the full dashboard or Compare to overlay trends.
+          </p>
+
+          {/* Summary table */}
+          <div style={{overflowX:'auto'}}>
+            <table style={{width:'100%', borderCollapse:'collapse', fontFamily:'var(--font-mono)', fontSize:13}}>
+              <thead>
+                <tr style={{borderBottom:'2px solid var(--border)'}}>
+                  <th style={{textAlign:'left', padding:'10px 12px', color:'var(--text-secondary)', fontWeight:500, fontFamily:'var(--font-sans)', fontSize:12, textTransform:'uppercase', letterSpacing:'0.5px'}}>Metric</th>
+                  {Object.entries(COUNTRY_META).map(([k,v]) => (
+                    <th key={k} style={{textAlign:'right', padding:'10px 12px', color:v.accent, fontWeight:600, fontFamily:'var(--font-sans)', fontSize:13}}>
+                      {v.flag} {v.short}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {DASHBOARD_METRICS.map((m, i) => {
+                  const getLatest = (country) => {
+                    const data = countryData[country]?.[m.key] || [];
+                    return data.length > 0 ? data[data.length - 1].value : null;
+                  };
+                  return (
+                    <tr key={m.key} style={{borderBottom:'1px solid var(--border)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)'}}>
+                      <td style={{padding:'10px 12px', color:'var(--text-secondary)', fontFamily:'var(--font-sans)', fontSize:13}}>{m.label}</td>
+                      {Object.keys(COUNTRY_META).map(c => {
+                        const val = getLatest(c);
+                        return (
+                          <td key={c} style={{textAlign:'right', padding:'10px 12px', fontWeight:500, color: val !== null ? 'var(--text-primary)' : 'var(--text-muted)'}}>
+                            {val !== null ? val.toLocaleString(undefined, {maximumFractionDigits:1}) : '—'}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Country Deep Dives */}
+      {['US','ARG','CHN'].includes(view) && (
+        <CountryPanel
+          country={view}
+          fredData={countryData[view] || {}}
+          wbData={{}}
+          loading={false}
+        />
+      )}
+
+      {/* Comparison View */}
+      {view === 'compare' && (
+        <div>
+          <h2 style={{fontSize:18, fontWeight:600, marginBottom:8}}>Cross-Country Comparison</h2>
+          <p style={{fontSize:14, color:'var(--text-secondary)', marginBottom:20}}>
+            Select a metric to overlay all three economies on a single chart.
+          </p>
+
+          <div style={{display:'flex', flexWrap:'wrap', gap:6, marginBottom:24}}>
+            {DASHBOARD_METRICS.map(m => (
+              <button key={m.key} onClick={() => setCompareMetric(m.key)}
+                style={{
+                  padding:'6px 14px', fontSize:12, fontWeight: compareMetric === m.key ? 600 : 400,
+                  background: compareMetric === m.key ? 'var(--accent-us)' : 'var(--bg-card)',
+                  color: compareMetric === m.key ? '#fff' : 'var(--text-secondary)',
+                  border: '1px solid ' + (compareMetric === m.key ? 'var(--accent-us)' : 'var(--border)'),
+                  borderRadius: 20, cursor:'pointer', transition:'all 0.15s',
+                  fontFamily:'var(--font-sans)',
+                }}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+
+          {(() => {
+            const m = DASHBOARD_METRICS.find(x => x.key === compareMetric);
+            const dataByCountry = {};
+            Object.keys(COUNTRY_META).forEach(c => {
+              dataByCountry[c] = countryData[c]?.[compareMetric] || [];
+            });
+            return (
+              <div style={{background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:'var(--radius)', padding:24}}>
+                <h3 style={{fontSize:16, fontWeight:600, marginBottom:4}}>{m.label}</h3>
+                <p style={{fontSize:12, color:'var(--text-muted)', marginBottom:16}}>{m.description} ({m.unit})</p>
+                <ComparisonChart metric={compareMetric} dataByCountry={dataByCountry} />
+              </div>
+            );
+          })()}
+
+
+        </div>
+      )}
+
+      {/* Sources */}
+      {view === 'sources' && (
+        <div>
+          <h2 style={{fontSize:18, fontWeight:600, marginBottom:8}}>Data Sources</h2>
+          <p style={{fontSize:14, color:'var(--text-secondary)', marginBottom:24}}>
+            All data current as of March 2026. Metrics use the most recent official release for each country.
+          </p>
+
+          {[
+            { heading: "United States", color: "var(--accent-us)", items: [
+              { metric: "Real GDP Growth", source: "Bureau of Economic Analysis (BEA)", detail: "GDP Second Estimate, Q4 2025 released Mar 13 2026", url: "https://www.bea.gov/data/gdp/gross-domestic-product" },
+              { metric: "CPI Inflation", source: "Bureau of Labor Statistics (BLS)", detail: "Consumer Price Index, Feb 2026 released Mar 11 2026", url: "https://www.bls.gov/cpi/" },
+              { metric: "Unemployment Rate", source: "Bureau of Labor Statistics (BLS)", detail: "Employment Situation, Feb 2026 released Mar 6 2026", url: "https://www.bls.gov/news.release/empsit.nr0.htm" },
+              { metric: "Exchange Rate (USD Index)", source: "Federal Reserve (FRED)", detail: "Trade Weighted U.S. Dollar Index: Broad (DTWEXBGS)", url: "https://fred.stlouisfed.org/series/DTWEXBGS" },
+              { metric: "Interest Rate", source: "Federal Reserve", detail: "Federal Funds Effective Rate, FOMC Mar 2026", url: "https://www.federalreserve.gov/monetarypolicy/openmarket.htm" },
+            ]},
+            { heading: "Argentina", color: "var(--accent-arg)", items: [
+              { metric: "Real GDP Growth", source: "INDEC (Argentina)", detail: "Estimador Mensual de Actividad Economica, Q4 2025 released Mar 23 2026", url: "https://www.indec.gob.ar/indec/web/Nivel4-Tema-3-9-47" },
+              { metric: "CPI Inflation", source: "INDEC (Argentina)", detail: "Indice de Precios al Consumidor, Feb 2026", url: "https://www.indec.gob.ar/indec/web/Nivel4-Tema-3-5-31" },
+              { metric: "Unemployment Rate", source: "INDEC (Argentina)", detail: "Encuesta Permanente de Hogares, Q4 2025 released Mar 18 2026", url: "https://www.indec.gob.ar/indec/web/Nivel4-Tema-4-31-58" },
+              { metric: "Exchange Rate (ARS/USD)", source: "BCRA / Trading Economics", detail: "Official exchange rate, daily", url: "https://www.bcra.gob.ar/PublicacionesEstadisticas/Principales_variables_datos.asp" },
+              { metric: "Interest Rate", source: "Banco Central de la Republica Argentina", detail: "BCRA reference rate (overnight repo)", url: "https://www.bcra.gob.ar/PublicacionesEstadisticas/Principales_variables.asp" },
+            ]},
+            { heading: "China", color: "var(--accent-chn)", items: [
+              { metric: "Real GDP Growth", source: "National Bureau of Statistics (NBS)", detail: "GDP Preliminary Estimate, Q4 2025 released Jan 19 2026", url: "https://www.stats.gov.cn/english/PressRelease/" },
+              { metric: "CPI Inflation", source: "National Bureau of Statistics (NBS)", detail: "Consumer Price Index, Feb 2026", url: "https://www.stats.gov.cn/english/PressRelease/" },
+              { metric: "Unemployment Rate", source: "National Bureau of Statistics (NBS)", detail: "Urban Surveyed Unemployment Rate, Jan-Feb 2026", url: "https://www.stats.gov.cn/english/PressRelease/" },
+              { metric: "Exchange Rate (CNY/USD)", source: "Federal Reserve (FRED)", detail: "Chinese Yuan Renminbi to U.S. Dollar Spot Rate", url: "https://fred.stlouisfed.org/series/DEXCHUS" },
+              { metric: "Interest Rate", source: "People's Bank of China", detail: "1-Year Loan Prime Rate (LPR), held Mar 20 2026", url: "http://www.pbc.gov.cn/en/3688006/index.html" },
+            ]},
+          ].map(section => (
+            <div key={section.heading} style={{marginBottom:32}}>
+              <h3 style={{fontSize:15, fontWeight:600, color:section.color, marginBottom:12}}>{section.heading}</h3>
+              <div style={{display:'flex', flexDirection:'column', gap:1}}>
+                {section.items.map((item, i) => (
+                  <div key={i} style={{
+                    display:'grid', gridTemplateColumns:'180px 1fr', gap:16,
+                    padding:'10px 14px', background: i % 2 === 0 ? 'var(--bg-card)' : 'transparent',
+                    borderRadius:6, fontSize:13,
+                  }}>
+                    <div style={{fontWeight:500, color:'var(--text-primary)'}}>{item.metric}</div>
+                    <div>
+                      <span style={{color:'var(--text-secondary)'}}>{item.source}</span>
+                      <span style={{color:'var(--text-muted)', marginLeft:8}}>{item.detail}</span>
+                      <a href={item.url} target="_blank" rel="noopener noreferrer"
+                         style={{color:section.color, marginLeft:8, textDecoration:'none', fontSize:12}}>
+                        Link ↗
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Footer */}
+      <footer style={{marginTop:48, paddingTop:20, borderTop:'1px solid var(--border)', fontSize:11, color:'var(--text-muted)', display:'flex', justifyContent:'space-between', flexWrap:'wrap', gap:8}}>
+        <span>Sources: BEA · BLS · FRED · INDEC · NBS China · IMF · World Bank</span>
+        <span>EMBA BA 6239 · Global Economics · Midterm Project · Spring 2026</span>
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
