@@ -10,30 +10,42 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg-primary: #0b0f14;
-    --bg-card: #141b24;
-    --bg-card-hover: #1a2332;
-    --border: #1e2a3a;
-    --text-primary: #e8ecf1;
-    --text-secondary: #8899aa;
-    --text-muted: #556677;
-    --accent-us: #e8ecf1;
-    --accent-arg: #75b8f4;
-    --accent-chn: #ef6b4a;
-    --accent-green: #34d399;
-    --accent-red: #f87171;
-    --accent-yellow: #fbbf24;
-    --radius: 10px;
-    --font-sans: 'DM Sans', -apple-system, sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    /* FRED-inspired palette */
+    --bg-primary: #ffffff;
+    --bg-page: #f5f6f7;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f4f7fb;
+    --bg-stripe: #f9fafb;
+    --bg-header: #0a3052;
+    --bg-header-accent: #1f4e7a;
+    --border: #d4d9e0;
+    --border-strong: #b7c0cb;
+    --text-primary: #1a1a1a;
+    --text-secondary: #4a5568;
+    --text-muted: #6b7785;
+    --text-on-dark: #ffffff;
+    --link: #2272b9;
+    --link-hover: #0a3052;
+    /* Country accents — FRED-style */
+    --accent-us:  #2272b9; /* FRED blue */
+    --accent-arg: #c8102e; /* red */
+    --accent-chn: #2e8b57; /* sea green */
+    --accent-green: #2e8b57;
+    --accent-red: #c8102e;
+    --accent-yellow: #d97706;
+    --radius: 3px;
+    --font-sans: 'Source Sans 3', 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: var(--font-sans);
-    background: var(--bg-primary);
+    background: var(--bg-page);
     color: var(--text-primary);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
@@ -41,19 +53,160 @@
   #root { min-height: 100vh; }
 
   /* Scrollbar */
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: var(--bg-primary); }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg-page); }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+  /* FRED-style top brand bar */
+  .fred-brandbar {
+    background: var(--bg-header);
+    color: var(--text-on-dark);
+    border-bottom: 3px solid var(--accent-us);
+  }
+  .fred-brandbar-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .fred-brand {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .fred-brand-mark {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 24px;
+    letter-spacing: -0.3px;
+    color: var(--text-on-dark);
+  }
+  .fred-brand-sub {
+    font-size: 12px;
+    color: rgba(255,255,255,0.72);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .fred-brandbar-meta {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: rgba(255,255,255,0.78);
+    text-align: right;
+  }
+
+  /* Page container */
+  .page-shell {
+    background: var(--bg-primary);
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    max-width: 1280px;
+    margin: 0 auto;
+    min-height: calc(100vh - 70px);
+  }
+
+  /* FRED nav tabs */
+  .fred-nav {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-primary);
+    flex-wrap: wrap;
+  }
+  .fred-tab {
+    padding: 12px 18px;
+    font-size: 14px;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: -1px;
+  }
+  .fred-tab:hover {
+    color: var(--link);
+    background: var(--bg-card-hover);
+  }
+  .fred-tab.active {
+    color: var(--bg-header);
+    border-bottom-color: var(--accent-us);
+    font-weight: 600;
+    background: var(--bg-primary);
+  }
+
+  /* Headings — FRED uses serif for the big titles */
+  h1.fred-title, h2.fred-title, h3.fred-title {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.2px;
+  }
+
+  /* Links */
+  a { color: var(--link); text-decoration: none; }
+  a:hover { color: var(--link-hover); text-decoration: underline; }
+
+  /* Table */
+  .fred-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+  }
+  .fred-table thead th {
+    text-align: left;
+    padding: 12px 16px;
+    background: var(--bg-stripe);
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    border-bottom: 2px solid var(--border-strong);
+  }
+  .fred-table tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+  }
+  .fred-table tbody tr:nth-child(even) td { background: var(--bg-stripe); }
+  .fred-table tbody tr:last-child td { border-bottom: none; }
+
+  /* Chip / pill buttons for compare metric selector */
+  .fred-chip {
+    padding: 7px 14px;
+    font-size: 13px;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .fred-chip:hover {
+    color: var(--link);
+    border-color: var(--link);
+  }
+  .fred-chip.active {
+    background: var(--accent-us);
+    color: #fff;
+    border-color: var(--accent-us);
+    font-weight: 600;
+  }
 
   /* Animations */
   @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
   .fade-in { animation: fadeIn 0.4s ease-out forwards; }
-  .stagger-1 { animation-delay: 0.05s; }
-  .stagger-2 { animation-delay: 0.1s; }
-  .stagger-3 { animation-delay: 0.15s; }
-  .stagger-4 { animation-delay: 0.2s; }
-  .stagger-5 { animation-delay: 0.25s; }
   .loading-pulse { animation: pulse 1.5s ease-in-out infinite; }
 </style>
 </head>
@@ -233,11 +386,11 @@ function Sparkline({ data, color, width = 120, height = 40 }) {
       <AreaChart data={data} margin={{top:2,right:2,bottom:2,left:2}}>
         <defs>
           <linearGradient id={`grad-${color.replace(/[^a-z0-9]/gi,'')}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity={0.3}/>
+            <stop offset="0%" stopColor={color} stopOpacity={0.22}/>
             <stop offset="100%" stopColor={color} stopOpacity={0.02}/>
           </linearGradient>
         </defs>
-        <Area type="monotone" dataKey="value" stroke={color} strokeWidth={1.5}
+        <Area type="monotone" dataKey="value" stroke={color} strokeWidth={1.75}
               fill={`url(#grad-${color.replace(/[^a-z0-9]/gi,'')})`} dot={false} />
       </AreaChart>
     </ResponsiveContainer>
@@ -276,12 +429,13 @@ function ComparisonChart({ metric, dataByCountry }) {
     <div style={{width:'100%', height:300}}>
       <ResponsiveContainer>
         <LineChart data={thinned} margin={{top:10,right:20,bottom:5,left:10}}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-          <XAxis dataKey="date" tickFormatter={formatDate} tick={{fill:'var(--text-muted)', fontSize:11, fontFamily:'var(--font-mono)'}} interval="preserveStartEnd" />
-          <YAxis tick={{fill:'var(--text-muted)', fontSize:11, fontFamily:'var(--font-mono)'}} width={50} />
+          <CartesianGrid strokeDasharray="2 4" stroke="var(--border)" vertical={false} />
+          <XAxis dataKey="date" tickFormatter={formatDate} tick={{fill:'var(--text-secondary)', fontSize:11, fontFamily:'var(--font-mono)'}} interval="preserveStartEnd" axisLine={{stroke:'var(--border-strong)'}} tickLine={{stroke:'var(--border-strong)'}} />
+          <YAxis tick={{fill:'var(--text-secondary)', fontSize:11, fontFamily:'var(--font-mono)'}} width={50} axisLine={{stroke:'var(--border-strong)'}} tickLine={{stroke:'var(--border-strong)'}} />
           <Tooltip
-            contentStyle={{background:'var(--bg-card)',border:'1px solid var(--border)',borderRadius:8,fontFamily:'var(--font-mono)',fontSize:12}}
-            labelStyle={{color:'var(--text-secondary)'}}
+            contentStyle={{background:'#fff',border:'1px solid var(--border-strong)',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:12,boxShadow:'0 2px 8px rgba(10,48,82,0.12)'}}
+            labelStyle={{color:'var(--text-secondary)',fontWeight:600}}
+            itemStyle={{color:'var(--text-primary)'}}
           />
           {Object.keys(COUNTRY_META).map(c => (
             <Line key={c} type="monotone" dataKey={c}
@@ -304,21 +458,22 @@ function MetricCard({ label, value, unit, data, color, description, trend }) {
     <div style={{
       background: 'var(--bg-card)',
       border: '1px solid var(--border)',
+      borderTop: '3px solid ' + color,
       borderRadius: 'var(--radius)',
       padding: '16px 18px',
       display: 'flex',
       flexDirection: 'column',
       gap: 8,
-      transition: 'border-color 0.2s, background 0.2s',
+      transition: 'box-shadow 0.2s, transform 0.2s',
       cursor: 'default',
     }}
-    onMouseEnter={e => { e.currentTarget.style.borderColor = color; e.currentTarget.style.background = 'var(--bg-card-hover)'; }}
-    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg-card)'; }}
+    onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 2px 12px rgba(10,48,82,0.10)'; }}
+    onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; }}
     >
       <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
         <div>
-          <div style={{fontSize:12, color:'var(--text-secondary)', fontWeight:500, textTransform:'uppercase', letterSpacing:'0.5px'}}>{label}</div>
-          <div style={{fontSize:26, fontFamily:'var(--font-mono)', fontWeight:600, marginTop:4, color: value !== null ? 'var(--text-primary)' : 'var(--text-muted)'}}>
+          <div style={{fontSize:12, color:'var(--text-secondary)', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.6px'}}>{label}</div>
+          <div style={{fontSize:28, fontFamily:'var(--font-mono)', fontWeight:600, marginTop:4, color: value !== null ? 'var(--text-primary)' : 'var(--text-muted)'}}>
             {value !== null ? `${value.toLocaleString(undefined, {maximumFractionDigits:1})}` : '—'}
             <span style={{fontSize:13, fontWeight:400, color:'var(--text-muted)', marginLeft:4}}>{unit}</span>
           </div>
@@ -326,11 +481,11 @@ function MetricCard({ label, value, unit, data, color, description, trend }) {
         <Sparkline data={data} color={color} />
       </div>
       {trend !== null && (
-        <div style={{fontSize:12, fontFamily:'var(--font-mono)', color: trendColor}}>
+        <div style={{fontSize:12, fontFamily:'var(--font-mono)', color: trendColor, fontWeight:500}}>
           {trendArrow} {Math.abs(trend).toFixed(1)} vs prior
         </div>
       )}
-      <div style={{fontSize:11, color:'var(--text-muted)', marginTop:2}}>{description}</div>
+      <div style={{fontSize:12, color:'var(--text-muted)', marginTop:2}}>{description}</div>
     </div>
   );
 }
@@ -370,11 +525,11 @@ function CountryPanel({ country, fredData, wbData, loading }) {
 
   return (
     <div>
-      <div style={{display:'flex', alignItems:'center', gap:12, marginBottom:20}}>
-        <span style={{fontSize:32}}>{meta.flag}</span>
+      <div style={{display:'flex', alignItems:'center', gap:14, marginBottom:24, paddingBottom:14, borderBottom:'2px solid ' + meta.accent}}>
+        <span style={{fontSize:36}}>{meta.flag}</span>
         <div>
-          <h2 style={{fontSize:22, fontWeight:600, margin:0}}>{meta.name}</h2>
-          <span style={{fontSize:13, color:'var(--text-secondary)'}}>Economic Dashboard</span>
+          <h2 className="fred-title" style={{fontSize:28, margin:0, color: meta.accent}}>{meta.name}</h2>
+          <span style={{fontSize:13, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'0.6px', fontWeight:500}}>Economic Dashboard</span>
         </div>
       </div>
       <div style={{
@@ -409,70 +564,69 @@ function App() {
   ];
 
   return (
-    <div style={{maxWidth:1280, margin:'0 auto', padding:'20px 24px 60px'}}>
-      {/* Header */}
-      <header style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24, paddingBottom:16, borderBottom:'1px solid var(--border)'}}>
-        <div>
-          <h1 style={{fontSize:22, fontWeight:700, letterSpacing:'-0.3px', margin:0}}>Global Economics Dashboard</h1>
-          <span style={{fontSize:12, color:'var(--text-muted)'}}>EMBA BA 6239 · Spring 2026 · Data as of March 2026</span>
+    <>
+      {/* FRED-style brand bar */}
+      <div className="fred-brandbar">
+        <div className="fred-brandbar-inner">
+          <div className="fred-brand">
+            <span className="fred-brand-mark">Global Economics Dashboard</span>
+            <span className="fred-brand-sub">EMBA BA 6239 · Spring 2026</span>
+          </div>
+          <div className="fred-brandbar-meta">
+            Data as of March 2026<br/>
+            BEA · BLS · FRED · INDEC · NBS · IMF · World Bank
+          </div>
         </div>
-        <div style={{fontSize:11, color:'var(--text-muted)', fontFamily:'var(--font-mono)'}}>
-          Sources: BEA, BLS, FRED, INDEC, NBS, IMF, World Bank
-        </div>
-      </header>
+      </div>
 
-      {/* Navigation */}
-      <nav style={{display:'flex', gap:4, marginBottom:28, flexWrap:'wrap'}}>
-        {tabs.map(t => (
-          <button key={t.id} onClick={() => setView(t.id)}
-            style={{
-              padding:'8px 16px', fontSize:13, fontWeight: view === t.id ? 600 : 400,
-              background: view === t.id ? 'var(--bg-card-hover)' : 'transparent',
-              color: view === t.id ? 'var(--text-primary)' : 'var(--text-secondary)',
-              border: view === t.id ? '1px solid var(--border)' : '1px solid transparent',
-              borderRadius: 6, cursor:'pointer', transition:'all 0.2s',
-              fontFamily:'var(--font-sans)',
-            }}
-          >
-            {t.label}
-          </button>
-        ))}
-      </nav>
+      <div className="page-shell">
+        {/* Navigation */}
+        <nav className="fred-nav">
+          {tabs.map(t => (
+            <button key={t.id} onClick={() => setView(t.id)}
+              className={'fred-tab' + (view === t.id ? ' active' : '')}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
+
+        <div style={{padding:'28px 32px 60px'}}>
 
       {/* Overview */}
       {view === 'overview' && (
         <div>
-          <h2 style={{fontSize:18, fontWeight:600, marginBottom:16}}>Three-Economy Snapshot</h2>
-          <p style={{fontSize:14, color:'var(--text-secondary)', marginBottom:24, maxWidth:700}}>
-            Key metrics at a glance. Click a country tab for the full dashboard or Compare to overlay trends.
+          <h2 className="fred-title" style={{fontSize:26, marginBottom:8}}>Three-Economy Snapshot</h2>
+          <p style={{fontSize:15, color:'var(--text-secondary)', marginBottom:24, maxWidth:740}}>
+            Key macroeconomic indicators for the United States, Argentina, and China. Click a country tab for the full dashboard or <em>Compare</em> to overlay trends.
           </p>
 
           {/* Summary table */}
           <div style={{overflowX:'auto'}}>
-            <table style={{width:'100%', borderCollapse:'collapse', fontFamily:'var(--font-mono)', fontSize:13}}>
+            <table className="fred-table">
               <thead>
-                <tr style={{borderBottom:'2px solid var(--border)'}}>
-                  <th style={{textAlign:'left', padding:'10px 12px', color:'var(--text-secondary)', fontWeight:500, fontFamily:'var(--font-sans)', fontSize:12, textTransform:'uppercase', letterSpacing:'0.5px'}}>Metric</th>
+                <tr>
+                  <th>Metric</th>
                   {Object.entries(COUNTRY_META).map(([k,v]) => (
-                    <th key={k} style={{textAlign:'right', padding:'10px 12px', color:v.accent, fontWeight:600, fontFamily:'var(--font-sans)', fontSize:13}}>
+                    <th key={k} style={{textAlign:'right', color:v.accent}}>
                       {v.flag} {v.short}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {DASHBOARD_METRICS.map((m, i) => {
+                {DASHBOARD_METRICS.map((m) => {
                   const getLatest = (country) => {
                     const data = countryData[country]?.[m.key] || [];
                     return data.length > 0 ? data[data.length - 1].value : null;
                   };
                   return (
-                    <tr key={m.key} style={{borderBottom:'1px solid var(--border)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)'}}>
-                      <td style={{padding:'10px 12px', color:'var(--text-secondary)', fontFamily:'var(--font-sans)', fontSize:13}}>{m.label}</td>
+                    <tr key={m.key}>
+                      <td style={{color:'var(--text-primary)', fontWeight:500}}>{m.label} <span style={{color:'var(--text-muted)', fontWeight:400, fontSize:12}}>({m.unit})</span></td>
                       {Object.keys(COUNTRY_META).map(c => {
                         const val = getLatest(c);
                         return (
-                          <td key={c} style={{textAlign:'right', padding:'10px 12px', fontWeight:500, color: val !== null ? 'var(--text-primary)' : 'var(--text-muted)'}}>
+                          <td key={c} style={{textAlign:'right', fontFamily:'var(--font-mono)', fontWeight:500, color: val !== null ? 'var(--text-primary)' : 'var(--text-muted)'}}>
                             {val !== null ? val.toLocaleString(undefined, {maximumFractionDigits:1}) : '—'}
                           </td>
                         );
@@ -499,22 +653,15 @@ function App() {
       {/* Comparison View */}
       {view === 'compare' && (
         <div>
-          <h2 style={{fontSize:18, fontWeight:600, marginBottom:8}}>Cross-Country Comparison</h2>
-          <p style={{fontSize:14, color:'var(--text-secondary)', marginBottom:20}}>
+          <h2 className="fred-title" style={{fontSize:26, marginBottom:8}}>Cross-Country Comparison</h2>
+          <p style={{fontSize:15, color:'var(--text-secondary)', marginBottom:20}}>
             Select a metric to overlay all three economies on a single chart.
           </p>
 
-          <div style={{display:'flex', flexWrap:'wrap', gap:6, marginBottom:24}}>
+          <div style={{display:'flex', flexWrap:'wrap', gap:8, marginBottom:24}}>
             {DASHBOARD_METRICS.map(m => (
               <button key={m.key} onClick={() => setCompareMetric(m.key)}
-                style={{
-                  padding:'6px 14px', fontSize:12, fontWeight: compareMetric === m.key ? 600 : 400,
-                  background: compareMetric === m.key ? 'var(--accent-us)' : 'var(--bg-card)',
-                  color: compareMetric === m.key ? '#fff' : 'var(--text-secondary)',
-                  border: '1px solid ' + (compareMetric === m.key ? 'var(--accent-us)' : 'var(--border)'),
-                  borderRadius: 20, cursor:'pointer', transition:'all 0.15s',
-                  fontFamily:'var(--font-sans)',
-                }}
+                className={'fred-chip' + (compareMetric === m.key ? ' active' : '')}
               >
                 {m.label}
               </button>
@@ -529,22 +676,20 @@ function App() {
             });
             return (
               <div style={{background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:'var(--radius)', padding:24}}>
-                <h3 style={{fontSize:16, fontWeight:600, marginBottom:4}}>{m.label}</h3>
-                <p style={{fontSize:12, color:'var(--text-muted)', marginBottom:16}}>{m.description} ({m.unit})</p>
+                <h3 className="fred-title" style={{fontSize:18, marginBottom:4}}>{m.label}</h3>
+                <p style={{fontSize:13, color:'var(--text-muted)', marginBottom:16}}>{m.description} ({m.unit})</p>
                 <ComparisonChart metric={compareMetric} dataByCountry={dataByCountry} />
               </div>
             );
           })()}
-
-
         </div>
       )}
 
       {/* Sources */}
       {view === 'sources' && (
         <div>
-          <h2 style={{fontSize:18, fontWeight:600, marginBottom:8}}>Data Sources</h2>
-          <p style={{fontSize:14, color:'var(--text-secondary)', marginBottom:24}}>
+          <h2 className="fred-title" style={{fontSize:26, marginBottom:8}}>Data Sources</h2>
+          <p style={{fontSize:15, color:'var(--text-secondary)', marginBottom:24}}>
             All data current as of March 2026. Metrics use the most recent official release for each country.
           </p>
 
@@ -572,20 +717,20 @@ function App() {
             ]},
           ].map(section => (
             <div key={section.heading} style={{marginBottom:32}}>
-              <h3 style={{fontSize:15, fontWeight:600, color:section.color, marginBottom:12}}>{section.heading}</h3>
-              <div style={{display:'flex', flexDirection:'column', gap:1}}>
+              <h3 className="fred-title" style={{fontSize:18, color:section.color, marginBottom:12, paddingBottom:6, borderBottom:'2px solid ' + section.color}}>{section.heading}</h3>
+              <div style={{display:'flex', flexDirection:'column'}}>
                 {section.items.map((item, i) => (
                   <div key={i} style={{
-                    display:'grid', gridTemplateColumns:'180px 1fr', gap:16,
-                    padding:'10px 14px', background: i % 2 === 0 ? 'var(--bg-card)' : 'transparent',
-                    borderRadius:6, fontSize:13,
+                    display:'grid', gridTemplateColumns:'200px 1fr', gap:16,
+                    padding:'12px 14px', background: i % 2 === 0 ? 'var(--bg-stripe)' : 'var(--bg-card)',
+                    fontSize:14, borderBottom:'1px solid var(--border)',
                   }}>
-                    <div style={{fontWeight:500, color:'var(--text-primary)'}}>{item.metric}</div>
+                    <div style={{fontWeight:600, color:'var(--text-primary)'}}>{item.metric}</div>
                     <div>
                       <span style={{color:'var(--text-secondary)'}}>{item.source}</span>
-                      <span style={{color:'var(--text-muted)', marginLeft:8}}>{item.detail}</span>
+                      <span style={{color:'var(--text-muted)', marginLeft:8}}>· {item.detail}</span>
                       <a href={item.url} target="_blank" rel="noopener noreferrer"
-                         style={{color:section.color, marginLeft:8, textDecoration:'none', fontSize:12}}>
+                         style={{marginLeft:8, fontSize:13}}>
                         Link ↗
                       </a>
                     </div>
@@ -597,12 +742,14 @@ function App() {
         </div>
       )}
 
-      {/* Footer */}
-      <footer style={{marginTop:48, paddingTop:20, borderTop:'1px solid var(--border)', fontSize:11, color:'var(--text-muted)', display:'flex', justifyContent:'space-between', flexWrap:'wrap', gap:8}}>
-        <span>Sources: BEA · BLS · FRED · INDEC · NBS China · IMF · World Bank</span>
-        <span>EMBA BA 6239 · Global Economics · Midterm Project · Spring 2026</span>
-      </footer>
-    </div>
+          {/* Footer */}
+          <footer style={{marginTop:56, paddingTop:20, borderTop:'1px solid var(--border)', fontSize:12, color:'var(--text-muted)', display:'flex', justifyContent:'space-between', flexWrap:'wrap', gap:8}}>
+            <span>Sources: BEA · BLS · FRED · INDEC · NBS China · IMF · World Bank</span>
+            <span>EMBA BA 6239 · Global Economics · Midterm Project · Spring 2026</span>
+          </footer>
+        </div>
+      </div>
+    </>
   );
 }
 
