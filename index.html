@@ -280,6 +280,9 @@ const STATIC_DATA = {
       D("2024-07",-4.2), D("2024-10",-4.1),
       D("2025-01",-6.0), D("2025-04",-3.3), D("2025-07",-2.9), D("2025-10",-2.4),
     ],
+    big_mac: [
+      D("2021-01",5.66), D("2022-01",5.81), D("2023-01",5.36), D("2024-01",5.69), D("2025-01",5.79),
+    ],
   },
 
   ARG: {
@@ -320,6 +323,9 @@ const STATIC_DATA = {
     current_account: [
       D("2022-01",-0.7), D("2023-01",-3.2), D("2024-01",0.9), D("2025-01",-1.7),
     ],
+    big_mac: [
+      D("2021-01",3.75), D("2022-01",3.85), D("2023-01",4.64), D("2024-01",3.96), D("2025-01",6.95),
+    ],
   },
 
   CHN: {
@@ -358,6 +364,9 @@ const STATIC_DATA = {
     current_account: [
       D("2022-01",2.3), D("2023-01",1.4), D("2024-01",2.2), D("2025-01",5.2),
     ],
+    big_mac: [
+      D("2021-01",3.41), D("2022-01",3.56), D("2023-01",3.50), D("2024-01",3.48), D("2025-01",3.52),
+    ],
   },
 };
 
@@ -372,6 +381,7 @@ const DASHBOARD_METRICS = [
   { key: "unemployment",    label: "Unemployment Rate",      unit: "%",     description: "Total unemployment rate" },
   { key: "exchange_rate",   label: "Exchange Rate vs USD",   unit: "LC/$",  description: "Local currency per US dollar (USD index for US)" },
   { key: "policy_rate",     label: "Interest Rate",          unit: "%",     description: "Policy / interbank rate" },
+  { key: "big_mac",         label: "Big Mac Index",          unit: "USD",   description: "Price of a Big Mac in USD at market exchange rate (PPP gauge)" },
 ];
 
 // ═══════════════════════════════════════════════════════════════
@@ -700,6 +710,7 @@ function App() {
               { metric: "Unemployment Rate", source: "Bureau of Labor Statistics (BLS)", detail: "Employment Situation, Feb 2026 released Mar 6 2026", url: "https://www.bls.gov/news.release/empsit.nr0.htm" },
               { metric: "Exchange Rate (USD Index)", source: "Federal Reserve (FRED)", detail: "Trade Weighted U.S. Dollar Index: Broad (DTWEXBGS)", url: "https://fred.stlouisfed.org/series/DTWEXBGS" },
               { metric: "Interest Rate", source: "Federal Reserve", detail: "Federal Funds Effective Rate, FOMC Mar 2026", url: "https://www.federalreserve.gov/monetarypolicy/openmarket.htm" },
+              { metric: "Big Mac Index", source: "The Economist / DataPandas", detail: "Big Mac Index, semi-annual release (baseline reference economy)", url: "https://www.datapandas.org/ranking/big-mac-index-by-country" },
             ]},
             { heading: "Argentina", color: "var(--accent-arg)", items: [
               { metric: "Real GDP Growth", source: "INDEC (Argentina)", detail: "Estimador Mensual de Actividad Economica, Q4 2025 released Mar 23 2026", url: "https://www.indec.gob.ar/indec/web/Nivel4-Tema-3-9-47" },
@@ -707,6 +718,7 @@ function App() {
               { metric: "Unemployment Rate", source: "INDEC (Argentina)", detail: "Encuesta Permanente de Hogares, Q4 2025 released Mar 18 2026", url: "https://www.indec.gob.ar/indec/web/Nivel4-Tema-4-31-58" },
               { metric: "Exchange Rate (ARS/USD)", source: "BCRA / Trading Economics", detail: "Official exchange rate, daily", url: "https://www.bcra.gob.ar/PublicacionesEstadisticas/Principales_variables_datos.asp" },
               { metric: "Interest Rate", source: "Banco Central de la Republica Argentina", detail: "BCRA reference rate (overnight repo)", url: "https://www.bcra.gob.ar/PublicacionesEstadisticas/Principales_variables.asp" },
+              { metric: "Big Mac Index", source: "The Economist / DataPandas", detail: "Big Mac Index — ARS price converted at official rate; 2025 value reflects post-devaluation distortion", url: "https://www.datapandas.org/ranking/big-mac-index-by-country" },
             ]},
             { heading: "China", color: "var(--accent-chn)", items: [
               { metric: "Real GDP Growth", source: "National Bureau of Statistics (NBS)", detail: "GDP Preliminary Estimate, Q4 2025 released Jan 19 2026", url: "https://www.stats.gov.cn/english/PressRelease/" },
@@ -714,6 +726,7 @@ function App() {
               { metric: "Unemployment Rate", source: "National Bureau of Statistics (NBS)", detail: "Urban Surveyed Unemployment Rate, Jan-Feb 2026", url: "https://www.stats.gov.cn/english/PressRelease/" },
               { metric: "Exchange Rate (CNY/USD)", source: "Federal Reserve (FRED)", detail: "Chinese Yuan Renminbi to U.S. Dollar Spot Rate", url: "https://fred.stlouisfed.org/series/DEXCHUS" },
               { metric: "Interest Rate", source: "People's Bank of China", detail: "1-Year Loan Prime Rate (LPR), held Mar 20 2026", url: "http://www.pbc.gov.cn/en/3688006/index.html" },
+              { metric: "Big Mac Index", source: "The Economist / DataPandas", detail: "Big Mac Index — CNY price converted at market rate; persistent undervaluation signal vs USD baseline", url: "https://www.datapandas.org/ranking/big-mac-index-by-country" },
             ]},
           ].map(section => (
             <div key={section.heading} style={{marginBottom:32}}>
